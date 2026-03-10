@@ -3,6 +3,9 @@
 
 #include "field_info.h"
 
-Fieldinfo* get_double_field_info();
+int is_positive_double(const void* elem);
+int is_negative_double(const void* elem);
+
+const Fieldinfo* get_double_field_info();
 
 #endif
