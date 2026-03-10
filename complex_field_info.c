@@ -1,6 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "complex_field_info.h"
+
+int mod_gt1_complex(const void* elem) {
+    if (!elem) return 0;
+    const Complex* z = (const Complex*)elem;
+    return ((z->ReZ * z->ReZ) + (z->ImZ * z->ImZ)) > 1.0;
+}
+
+int mod_lt1_complex(const void* elem) {
+    if (!elem) return 0;
+    const Complex* z = (const Complex*)elem;
+    return ((z->ReZ * z->ReZ) + (z->ImZ * z->ImZ)) < 1.0;
+}
+
 void print_complex(const void* elem)
 {
     Complex*z = (Complex*)elem;
@@ -13,13 +26,6 @@ double complex_mod_sq(const Complex* elem)
     double r = (z->ReZ)*(z->ReZ) + (z->ImZ)*(z->ImZ);
     return r;
 }
-
-int is_fit_complex(const void* elem) {
-    if (!elem) return 0;
-    const Complex* z = (const Complex*)elem;
-    return complex_mod_sq(z) > 1.0;
-}
-
 
 int compare_complex(const void*a, const void* b)
 {
@@ -60,21 +66,19 @@ void copy_complex(const void* scr, void* dst){
     res->ImZ = z ->ImZ;
 }
 
-Fieldinfo* COMPLEX_FIELD_INFO;
-Fieldinfo* get_complex_field_info() {
+ Fieldinfo* COMPLEX_FIELD_INFO = NULL;
+ const Fieldinfo* get_complex_field_info() {
     if (COMPLEX_FIELD_INFO == NULL) {
         COMPLEX_FIELD_INFO = (Fieldinfo*)malloc(sizeof(Fieldinfo));
+        if (!COMPLEX_FIELD_INFO) {
+            return NULL;
+        }
         COMPLEX_FIELD_INFO->elem_size = sizeof(Complex);
         COMPLEX_FIELD_INFO->print = print_complex;
         COMPLEX_FIELD_INFO->compare = compare_complex;
         COMPLEX_FIELD_INFO->square = square_complex;
         COMPLEX_FIELD_INFO->reverse = reverse_complex;
         COMPLEX_FIELD_INFO->copy = copy_complex;
-        COMPLEX_FIELD_INFO->is_fit = is_fit_complex;
     }
     return COMPLEX_FIELD_INFO;
 }
-
-
-
-
