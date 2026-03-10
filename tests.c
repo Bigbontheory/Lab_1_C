@@ -6,7 +6,6 @@
 #include "double_field_info.h"
 #include "complex_field_info.h"
 
-
 void double_negate(const void* src, void* dst) {
     *(double*)dst = -(*(double*)src);
 }
@@ -14,7 +13,6 @@ void double_negate(const void* src, void* dst) {
 int is_greater_than_five(const void* elem) {
     return (*(double*)elem) > 5.0;
 }
-
 
 void test_init_destroy() {
     DynamicArray arr;
@@ -28,7 +26,6 @@ void test_init_destroy() {
     assert(arr.data == NULL);
     printf("[OK] Init/Destroy\n");
 }
-
 
 void test_capacity_growth() {
     DynamicArray arr;
@@ -47,19 +44,16 @@ void test_capacity_growth() {
     printf("[OK] Capacity growth (realloc)\n");
 }
 
-
 void test_get_set_bounds() {
     DynamicArray arr;
     dyn_array_init(&arr, get_double_field_info());
 
     double v1 = 10.0, v2 = 20.0;
     dyn_array_push_back(&arr, &v1);
-
    
     dyn_array_set_element(&arr, 0, &v2);
     double* res = (double*)dyn_array_get_element(&arr, 0);
     assert(*res == 20.0);
-
  
     assert(dyn_array_get_element(&arr, 5) == NULL);
     assert(dyn_array_get_element(&arr, -1) == NULL);
@@ -108,7 +102,6 @@ void test_map() {
     printf("[OK] Map (Transform)\n");
 }
 
-
 void test_where() {
     DynamicArray src, res;
     dyn_array_init(&src, get_double_field_info());
@@ -128,7 +121,6 @@ void test_where() {
     dyn_array_destroy(&res);
     printf("[OK] Where (Filter)\n");
 }
-
 
 void test_concat() {
     DynamicArray a, b, res;
@@ -152,7 +144,6 @@ void test_concat() {
     printf("[OK] Concatenation\n");
 }
 
-
 void test_sort_complex() {
     DynamicArray arr;
     dyn_array_init(&arr, get_double_field_info());
@@ -172,7 +163,6 @@ void test_sort_complex() {
     printf("[OK] QuickSort\n");
 }
 
-
 void test_swap() {
     DynamicArray arr;
     dyn_array_init(&arr, get_double_field_info());
@@ -188,7 +178,6 @@ void test_swap() {
     dyn_array_destroy(&arr);
     printf("[OK] Swap\n");
 }
-
 
 void test_complex_work() {
     DynamicArray arr;
@@ -206,7 +195,6 @@ void test_complex_work() {
 
 int main() {
     printf("--- STARTING ALL TESTS ---\n");
-
     test_init_destroy();
     test_capacity_growth();
     test_get_set_bounds();
@@ -217,7 +205,6 @@ int main() {
     test_swap();
     test_sort_complex();
     test_complex_work();
-
     printf("--- ALL TESTS PASSED SUCCESSFULLY! ---\n");
     return 0;
 }
