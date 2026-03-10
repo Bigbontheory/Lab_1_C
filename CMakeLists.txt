@@ -7,13 +7,9 @@ add_executable (my_prog
     complex_field_info.c 
     double_field_info.c)
 
-
 add_executable (full_tests 
     tests.c 
     dynamic_array.c 
     complex_field_info.c 
     double_field_info.c
 )
-
-
-
