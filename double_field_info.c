@@ -2,6 +2,17 @@
 #include <stdlib.h>
 #include "double_field_info.h"
 
+
+int is_positive_double(const void* elem) {
+    if (!elem) return 0;
+    return *(const double*)elem > 0.0;
+}
+
+int is_negative_double(const void* elem) {
+    if (!elem) return 0;
+    return *(const double*)elem < 0.0;
+}
+
 void print_double(const void* elem) {
     printf("%f", *((double*)elem));
 }
@@ -26,22 +37,19 @@ void copy_double(const void* scr, void* dst) {
     *((double*)dst) = *((double*)scr);
 }
 
-int is_fit_double(const void* elem) {
-    return (*((double*)elem)) > 0.0;
-}
-
 Fieldinfo* DOUBLE_FIELD_INFO = NULL;
-
-Fieldinfo* get_double_field_info() {
+const Fieldinfo* get_double_field_info() {
     if (DOUBLE_FIELD_INFO == NULL) {
         DOUBLE_FIELD_INFO = (Fieldinfo*)malloc(sizeof(Fieldinfo));
+        if (!DOUBLE_FIELD_INFO) {
+            return NULL;
+        }
         DOUBLE_FIELD_INFO->elem_size = sizeof(double);
         DOUBLE_FIELD_INFO->compare = compare_double;
         DOUBLE_FIELD_INFO->print = print_double;
         DOUBLE_FIELD_INFO->square = square_double;
         DOUBLE_FIELD_INFO->reverse = reverse_double;
         DOUBLE_FIELD_INFO->copy = copy_double;
-        DOUBLE_FIELD_INFO->is_fit=is_fit_double;
     }
     return DOUBLE_FIELD_INFO;
 }
