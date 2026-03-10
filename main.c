@@ -1,19 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
-
-
 #include "field_info.h"
-#include "complex_field_info.c"
-#include "double_field_info.c"
-#include "dynamic_array.c"
+#include "complex_field_info.h"
+#include "double_field_info.h"
+#include "dynamic_array.h"
 
+#define MAX_ARRAYS 10
 
-void massive_input(DynamicArray* arr);
+void create_array(DynamicArray* arrays[], int* count);
+void input_data(DynamicArray* arrays[], int count);
+void get_element(DynamicArray* arrays[], int count);
+void set_element(DynamicArray* arrays[], int count);
+void show_array(DynamicArray* arrays[], int count);
+void pop_element(DynamicArray* arrays[], int count);
+void copy_array(DynamicArray* arrays[], int* count);
+void process_array(DynamicArray* arrays[], int* count);
+void concat_arrays(DynamicArray* arrays[], int* count);
 void print_main_menu();
-int select_array(int array_cnt, DynamicArray* arrays[]);
+int select_array(int count);
+void clear_input_buffer();
 
 int main() {
-    DynamicArray* arrays[10];
+    DynamicArray* arrays[MAX_ARRAYS];
     int array_cnt = 0;
     int choice = -1;
 
@@ -22,167 +30,36 @@ int main() {
     while (choice != 0) {
         print_main_menu();
         if (scanf("%d", &choice) != 1) {
-            while(getchar() != '\n');
+            clear_input_buffer();
             continue;
         }
 
         switch (choice) {
-            case 1: {
-                if (array_cnt >= 10) { printf("Error: Storage full!\n"); break; }
-                int type;
-                printf("\nSelect Type:\n1. Double\n2. Complex\nChoice: ");
-                scanf("%d", &type);
-
-                Fieldinfo* info = (type == 1) ? get_double_field_info() : get_complex_field_info();
-                arrays[array_cnt] = (DynamicArray*)malloc(sizeof(DynamicArray));
-                dyn_array_init(arrays[array_cnt], info);
-
-                printf("Array #%d created.\n", ++array_cnt);
-                break;
-            }
-
-            case 2: {
-                int idx = select_array(array_cnt, arrays);
-                if (idx != -1) massive_input(arrays[idx]);
-                break;
-            }
-
-            case 3: {
-                int idx = select_array(array_cnt, arrays);
-                if (idx != -1) {
-                    int pos;
-                    printf("Enter index: ");
-                    scanf("%d", &pos);
-                    void* elem = dyn_array_get_element(arrays[idx], pos);
-                    if (elem) {
-                        printf("Value at [%d]: ", pos);
-                        arrays[idx]->info->print(elem);
-                        printf("\n");
-                    } else {
-                        printf("Error: Index out of bounds!\n");
-                    }
-                }
-                break;
-            }
-
-            case 4: {
-                int idx = select_array(array_cnt, arrays);
-                if (idx != -1) {
-                    int pos;
-                    printf("Index to edit: ");
-                    scanf("%d", &pos);
-                    if (pos >= 0 && pos < arrays[idx]->size) {
-                        void* buf = malloc(arrays[idx]->info->elem_size);
-                        if (arrays[idx]->info->elem_size == sizeof(double)) {
-                            printf("New double: "); scanf("%lf", (double*)buf);
-                        } else {
-                            Complex* c = (Complex*)buf;
-                            printf("New Complex (Re Im): "); scanf("%lf %lf", &c->ReZ, &c->ImZ);
-                        }
-                        dyn_array_set_element(arrays[idx], pos, buf);
-                        free(buf);
-                        printf("Element updated.\n");
-                    } else {
-                        printf("Invalid index!\n");
-                    }
-                }
-                break;
-            }
-
-            case 5: {
-                int idx = select_array(array_cnt, arrays);
-                if (idx != -1) {
-                    printf("\n--- Array #%d ---\n", idx + 1);
-                    printf("Size: %d | Capacity: %d\n",
-                           dyn_array_get_size(arrays[idx]),
-                           dyn_array_get_capacity(arrays[idx]));
-                    printf("Content: ");
-                    dyn_array_print(arrays[idx]);
-                }
-                break;
-            }
-
-            case 6: {
-                int idx = select_array(array_cnt, arrays);
-                if (idx != -1) {
-                    if (arrays[idx]->size > 0) {
-                        dyn_array_pop_back(arrays[idx]);
-                        printf("Last element removed.\n");
-                    } else printf("Array is already empty.\n");
-                }
-                break;
-            }
-
-            case 7: {
-                int idx = select_array(array_cnt, arrays);
-                if (idx != -1 && array_cnt < 10) {
-                    arrays[array_cnt] = (DynamicArray*)malloc(sizeof(DynamicArray));
-                    dyn_array_copy(arrays[idx], arrays[array_cnt]);
-                    printf("Array #%d is a copy of #%d.\n", ++array_cnt, idx + 1);
-                }
-                break;
-            }
-
-            case 8: {
-                int idx = select_array(array_cnt, arrays);
-                if (idx == -1) break;
-
-                printf("\n--- Processing Array #%d ---\n", idx + 1);
-                printf("1. Sort (Hoare)  2. Square (Map)  3. Reverse (Map)  4. Filter (Where)\nChoice: ");
-                int op; scanf("%d", &op);
-
-                if (op == 1) {
-                    sort_array(arrays[idx]);
-                    printf("Sorted.\n");
-                } else if (op >= 2 && op <= 4) {
-                    if (array_cnt >= 10) { printf("No space for result!\n"); break; }
-                    arrays[array_cnt] = (DynamicArray*)malloc(sizeof(DynamicArray));
-                    dyn_array_init(arrays[array_cnt], arrays[idx]->info);
-
-                    if (op == 2) dyn_array_map(arrays[idx], arrays[array_cnt], arrays[idx]->info->square);
-                    else if (op == 3) dyn_array_map(arrays[idx], arrays[array_cnt], arrays[idx]->info->reverse);
-                    else if (op == 4) dyn_array_where(arrays[idx], arrays[array_cnt], arrays[idx]->info->is_fit);
-
-                    printf("Success! Result saved as Array #%d.\n", ++array_cnt);
-                }
-                break;
-            }
-
-            case 9: {
-                if (array_cnt < 2) { printf("Need 2 arrays!\n"); break; }
-                if (array_cnt >= 10) { printf("Full!\n"); break; }
-                int i1, i2;
-                printf("Select 2 indices (e.g., 1 2): ");
-                scanf("%d %d", &i1, &i2);
-                i1--; i2--;
-
-                if (i1 >= 0 && i2 >= 0 && i1 < array_cnt && i2 < array_cnt) {
-                    if (arrays[i1]->info != arrays[i2]->info) {
-                        printf("Error: Type mismatch!\n");
-                    } else {
-                        arrays[array_cnt] = (DynamicArray*)malloc(sizeof(DynamicArray));
-                        dyn_array_init(arrays[array_cnt], arrays[i1]->info);
-                        dyn_array_concatenate(arrays[i1], arrays[i2], arrays[array_cnt]);
-                        printf("Concatenated as Array #%d.\n", ++array_cnt);
-                    }
-                }
-                break;
-            }
-
+            case 1: create_array(arrays, &array_cnt); break;
+            case 2: input_data(arrays, array_cnt);    break;
+            case 3: get_element(arrays, array_cnt);   break;
+            case 4: set_element(arrays, array_cnt);   break;
+            case 5: show_array(arrays, array_cnt);    break;
+            case 6: pop_element(arrays, array_cnt);   break;
+            case 7: copy_array(arrays, &array_cnt);   break;
+            case 8: process_array(arrays, &array_cnt); break;
+            case 9: concat_arrays(arrays, &array_cnt); break;
             case 0: break;
+            default: printf("Unknown command.\n");
         }
     }
 
-
     for (int i = 0; i < array_cnt; i++) {
-        dyn_array_dinit(arrays[i]);
+        dyn_array_destroy(arrays[i]);
         free(arrays[i]);
     }
     printf("Memory cleared. Goodbye!\n");
     return 0;
 }
 
-
+void clear_input_buffer() {
+    while (getchar() != '\n');
+}
 
 void print_main_menu() {
     printf("\n--- MAIN MENU ---\n");
@@ -191,18 +68,37 @@ void print_main_menu() {
     printf("9. Concat    0. Exit\nChoice: ");
 }
 
-int select_array(int array_cnt, DynamicArray* arrays[]) {
-    if (array_cnt <= 0) { printf("No arrays exist yet!\n"); return -1; }
-    printf("Select array index (1-%d): ", array_cnt);
+int select_array(int count) {
+    if (count <= 0) { printf("No arrays exist yet!\n"); return -1; }
+    printf("Select array index (1-%d): ", count);
     int idx;
-    if (scanf("%d", &idx) != 1) { while(getchar() != '\n'); return -1; }
-    if (idx < 1 || idx > array_cnt) { printf("Invalid index!\n"); return -1; }
+    if (scanf("%d", &idx) != 1) { clear_input_buffer(); return -1; }
+    if (idx < 1 || idx > count) { printf("Invalid index!\n"); return -1; }
     return idx - 1;
 }
 
-void massive_input(DynamicArray* arr) {
-    if (!arr) return;
+void create_array(DynamicArray* arrays[], int* count) {
+    if (*count >= MAX_ARRAYS) { printf("Error: Storage full!\n"); return; }
+    int type;
+    printf("\nSelect Type:\n1. Double\n2. Complex\nChoice: ");
+    if (scanf("%d", &type) != 1) { clear_input_buffer(); return; }
+
+    const Fieldinfo* info = (type == 1) ? get_double_field_info() : get_complex_field_info();
+    arrays[*count] = (DynamicArray*)malloc(sizeof(DynamicArray));
+    if (arrays[*count]) {
+        dyn_array_init(arrays[*count], info);
+        printf("Array #%d created.\n", ++(*count));
+    }
+}
+
+void input_data(DynamicArray* arrays[], int count) {
+    int idx = select_array(count);
+    if (idx == -1) return;
+
+    DynamicArray* arr = arrays[idx];
     void* buffer = malloc(arr->info->elem_size);
+    if (!buffer) return;
+
     printf("\n--- MASSIVE INPUT ---\nEnter values (letter to stop):\n");
     while (1) {
         printf("[%d] -> ", arr->size);
@@ -215,6 +111,152 @@ void massive_input(DynamicArray* arr) {
         }
         dyn_array_push_back(arr, buffer);
     }
-    while(getchar() != '\n');
+    clear_input_buffer();
     free(buffer);
+}
+
+void get_element(DynamicArray* arrays[], int count) {
+    int idx = select_array(count);
+    if (idx == -1) return;
+
+    int pos;
+    printf("Enter index: ");
+    if (scanf("%d", &pos) == 1) {
+        void* elem = dyn_array_get_element(arrays[idx], pos);
+        if (elem) {
+            printf("Value at [%d]: ", pos);
+            arrays[idx]->info->print(elem);
+            printf("\n");
+        } else {
+            printf("Error: Index out of bounds!\n");
+        }
+    } else clear_input_buffer();
+}
+
+void set_element(DynamicArray* arrays[], int count) {
+    int idx = select_array(count);
+    if (idx == -1) return;
+
+    int pos;
+    printf("Index to edit: ");
+    if (scanf("%d", &pos) == 1) {
+        if (pos >= 0 && pos < arrays[idx]->size) {
+            void* buf = malloc(arrays[idx]->info->elem_size);
+            if (!buf) return;
+
+            if (arrays[idx]->info->elem_size == sizeof(double)) {
+                printf("New double: ");
+                if (scanf("%lf", (double*)buf) == 1) {
+                    dyn_array_set_element(arrays[idx], pos, buf);
+                    printf("Element updated.\n");
+                }
+            } else {
+                Complex* c = (Complex*)buf;
+                printf("New Complex (Re Im): ");
+                if (scanf("%lf %lf", &c->ReZ, &c->ImZ) == 2) {
+                    dyn_array_set_element(arrays[idx], pos, buf);
+                    printf("Element updated.\n");
+                }
+            }
+            free(buf);
+        } else {
+            printf("Invalid index!\n");
+        }
+    } else clear_input_buffer();
+}
+
+void show_array(DynamicArray* arrays[], int count) {
+    int idx = select_array(count);
+    if (idx != -1) {
+        printf("\n--- Array #%d ---\n", idx + 1);
+        printf("Size: %d | Capacity: %d\n", arrays[idx]->size, arrays[idx]->capacity);
+        printf("Content: ");
+        dyn_array_print(arrays[idx]);
+    }
+}
+
+void pop_element(DynamicArray* arrays[], int count) {
+    int idx = select_array(count);
+    if (idx != -1) {
+        if (arrays[idx]->size > 0) {
+            dyn_array_pop_back(arrays[idx]);
+            printf("Last element removed.\n");
+        } else {
+            printf("Array is already empty.\n");
+        }
+    }
+}
+
+void copy_array(DynamicArray* arrays[], int* count) {
+    int idx = select_array(*count);
+    if (idx != -1 && *count < MAX_ARRAYS) {
+        arrays[*count] = (DynamicArray*)malloc(sizeof(DynamicArray));
+        if (arrays[*count]) {
+            dyn_array_copy(arrays[idx], arrays[*count]);
+            printf("Array #%d is a copy of #%d.\n", ++(*count), idx + 1);
+        }
+    }
+}
+
+void process_array(DynamicArray* arrays[], int* count) {
+    int idx = select_array(*count);
+    if (idx == -1) return;
+
+    printf("\n--- Processing Array #%d ---\n", idx + 1);
+    printf("1. Sort 2. Square (Map)  3. Reverse (Map)  4. Filter (Where)\nChoice: ");
+    int op;
+    if (scanf("%d", &op) != 1) { clear_input_buffer(); return; }
+
+    if (op == 1) {
+        sort_array(arrays[idx]);
+        printf("Sorted.\n");
+        return;
+    }
+
+    if (*count >= MAX_ARRAYS) { printf("No space for result!\n"); return; }
+
+    arrays[*count] = (DynamicArray*)malloc(sizeof(DynamicArray));
+    if (!arrays[*count]) return;
+    
+    dyn_array_init(arrays[*count], arrays[idx]->info);
+
+    if (op == 2) {
+        dyn_array_map(arrays[idx], arrays[*count], arrays[idx]->info->square);
+    } else if (op == 3) {
+        dyn_array_map(arrays[idx], arrays[*count], arrays[idx]->info->reverse);
+    } else if (op == 4) {
+        int cond;
+        if (arrays[idx]->info->elem_size == sizeof(double)) {
+            printf("1. Positive  2. Negative\nChoice: ");
+            if (scanf("%d", &cond) == 1) {
+                dyn_array_where(arrays[idx], arrays[*count], (cond == 1) ? is_positive_double : is_negative_double);
+            } else clear_input_buffer();
+        } else {
+            printf("1. Modulus > 1  2. Modulus < 1\nChoice: ");
+            if (scanf("%d", &cond) == 1) {
+                dyn_array_where(arrays[idx], arrays[*count], (cond == 1) ? mod_gt1_complex : mod_lt1_complex);
+            } else clear_input_buffer();
+        }
+    }
+    printf("Success! Result saved as Array #%d.\n", ++(*count));
+}
+
+void concat_arrays(DynamicArray* arrays[], int* count) {
+    if (*count < 2 || *count >= MAX_ARRAYS) return;
+    
+    int i1, i2;
+    printf("Select 2 indices (e.g., 1 2): ");
+    if (scanf("%d %d", &i1, &i2) == 2) {
+        i1--; i2--;
+        if (i1 >= 0 && i2 >= 0 && i1 < *count && i2 < *count) {
+            if (arrays[i1]->info == arrays[i2]->info) {
+                arrays[*count] = (DynamicArray*)malloc(sizeof(DynamicArray));
+                if (arrays[*count]) {
+                    dyn_array_init(arrays[*count], arrays[i1]->info);
+                    dyn_array_concatenate(arrays[i1], arrays[i2], arrays[*count]);
+                    printf("Concatenated as Array #%d.\n", ++(*count));
+                }
+            } else printf("Error: Type mismatch!\n");
+        } else printf("Invalid indices!\n");
+    } else clear_input_buffer();
 }
