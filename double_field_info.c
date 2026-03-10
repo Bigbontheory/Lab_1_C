@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include "double_field_info.h"
 
-
 int is_positive_double(const void* elem) {
     if (!elem) return 0;
     return *(const double*)elem > 0.0;
